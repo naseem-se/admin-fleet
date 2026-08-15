@@ -22,6 +22,15 @@ export function getEcho() {
     auth: { headers: { Authorization: `Bearer ${token}` } },
   });
 
+  // Visible connection-state logging — check the browser console to
+  // confirm whether the socket is actually connecting, rather than
+  // guessing from silent behavior.
+  const pusher = echoInstance.connector.pusher;
+  pusher.connection.bind('connected', () => console.log('[Reverb] connected'));
+  pusher.connection.bind('disconnected', () => console.warn('[Reverb] disconnected'));
+  pusher.connection.bind('error', (err) => console.error('[Reverb] connection error', err));
+  pusher.connection.bind('unavailable', () => console.error('[Reverb] unavailable — is `php artisan reverb:start` running?'));
+
   return echoInstance;
 }
 

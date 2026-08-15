@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { apiClient, extractValidationErrors, extractErrorMessage } from '../../lib/apiClient';
 import { Loader } from '../../components/Loader';
 
-export function DocumentFormModal({ vehicleId, document, onClose }) {
+export function DriverDocumentFormModal({ driverId, document, onClose }) {
   const isEdit = !!document;
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState(null);
@@ -14,7 +14,7 @@ export function DocumentFormModal({ vehicleId, document, onClose }) {
 
   const { register, handleSubmit, setError, formState: { errors } } = useForm({
     defaultValues: {
-      document_type: document?.document_type ?? 'registration',
+      document_type: document?.document_type ?? 'license',
       document_number: document?.document_number ?? '',
       issue_date: document?.issue_date?.slice(0, 10) ?? '',
       expiry_date: document?.expiry_date?.slice(0, 10) ?? '',
@@ -31,23 +31,19 @@ export function DocumentFormModal({ vehicleId, document, onClose }) {
 
       if (isEdit) {
         form.append('_method', 'PUT');
-        await apiClient.post(`/vehicle-documents/${document.id}`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await apiClient.post(`/driver-documents/${document.id}`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
         toast.success('Document updated');
       } else {
-        form.append('vehicle_id', vehicleId);
-        await apiClient.post('/vehicles/' + vehicleId + '/documents', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await apiClient.post(`/drivers/${driverId}/documents`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
         toast.success('Document added');
       }
 
-      queryClient.invalidateQueries({ queryKey: ['vehicles', String(vehicleId), 'history'] });
+      queryClient.invalidateQueries({ queryKey: ['drivers', String(driverId)] });
       onClose();
     } catch (err) {
       const fieldErrors = extractValidationErrors(err);
       const message = extractErrorMessage(err);
 
-      // 'file' isn't a react-hook-form field (it's a plain <input>), so
-      // setError('file', ...) would be silently invisible — show it
-      // explicitly instead, right under the file input.
       if (fieldErrors.file) {
         setFileError(fieldErrors.file);
       }
@@ -60,8 +56,6 @@ export function DocumentFormModal({ vehicleId, document, onClose }) {
         Object.entries(otherFieldErrors).forEach(([field, msg]) => setError(field, { message: msg }));
       }
 
-      // Always surface something visible — never let an error pass silently,
-      // regardless of which field(s) it applies to.
       toast.error(fieldErrors.file ?? message);
     } finally {
       setSubmitting(false);
@@ -77,17 +71,15 @@ export function DocumentFormModal({ vehicleId, document, onClose }) {
   return (
     <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg animate-scaleIn">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? 'Edit' : 'Add'} Document</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? 'Edit' : 'Add'} Driver Document</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
             <select {...register('document_type')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none">
-              <option value="registration">Registration</option>
-              <option value="insurance">Insurance</option>
-              <option value="token">Token</option>
-              <option value="permit">Permit</option>
-              <option value="fitness">Fitness</option>
+              <option value="license">Driving License</option>
+              <option value="cnic">CNIC / National ID</option>
+              <option value="medical_certificate">Medical Certificate</option>
               <option value="other">Other</option>
             </select>
           </div>

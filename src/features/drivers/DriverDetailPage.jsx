@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, UserRound, Truck, KeyRound, X } from 'lucide-react';
+import { ArrowLeft, UserRound, Truck, KeyRound, X, FileText, Pencil, Trash2, ExternalLink } from 'lucide-react';
 import { driversApi } from './api';
 import { VehicleSelect } from '../vehicles/VehicleSelect';
 import { useUpdateVehicle } from '../vehicles/useVehicles';
@@ -14,6 +14,8 @@ import { extractValidationErrors, extractErrorMessage } from '../../lib/apiClien
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useConfirm } from '../../components/ConfirmProvider';
+import { DriverDocumentFormModal } from './DriverDocumentFormModal';
+import { apiClient } from '../../lib/apiClient';
 
 export function DriverDetailPage() {
   const { id } = useParams();
@@ -22,6 +24,8 @@ export function DriverDetailPage() {
   const [pendingVehicle, setPendingVehicle] = useState(null);
   const [showLoginForm, setShowLoginForm] = useState(false);
   const confirm = useConfirm();
+  const [addingDoc, setAddingDoc] = useState(false);
+  const [editingDoc, setEditingDoc] = useState(null);
 
   const { data: driver, isLoading: driverLoading, refetch: refetchDriver } = useQuery({
     queryKey: ['drivers', id],
@@ -54,6 +58,18 @@ export function DriverDetailPage() {
     toast.success('Vehicle Unassigned')
   }
 
+  async function handleDeleteDoc(doc) {
+    const ok = await confirm({ title: 'Delete document?', message: 'This document will be permanently removed.', confirmLabel: 'Delete' });
+    if (!ok) return;
+    try {
+      await apiClient.delete(`/driver-documents/${doc.id}`);
+      toast.success('Document deleted');
+      refetchDriver();
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
+  }
+
 
   if (driverLoading) return <FullPageLoader />;
   if (!driver) return null;
@@ -82,7 +98,7 @@ export function DriverDetailPage() {
         <StatCard label="Fuel Cost (30d)" value={perfLoading ? '-' : performance?.total_fuel_cost ?? 0} icon={Truck} color="green" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-gray-200 bg-white p-5 card-hover">
           <h2 className="flex items-center gap-2 font-medium text-gray-900 mb-3">
             <Truck size={16} /> Assigned Vehicle
@@ -116,6 +132,39 @@ export function DriverDetailPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-5 card-hover">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="flex items-center gap-2 font-medium text-gray-900">
+              <FileText size={16} /> Documents
+            </h2>
+            <button onClick={() => setAddingDoc(true)} className="text-xs text-brand-600 hover:underline">+ Add</button>
+          </div>
+
+          {!driver.documents || driver.documents.length === 0 ? (
+            <p className="text-sm text-gray-400">No documents on file.</p>
+          ) : (
+            <div className="space-y-2">
+              {driver.documents.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                  <div>
+                    <span className="capitalize text-gray-700">{doc.document_type.replace('_', ' ')}</span>
+                    <p className="text-xs text-gray-500">{new Date(doc.expiry_date).toLocaleDateString() ?? 'No expiry set'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {doc.file_url && (
+                      <a href={doc.file_url} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-brand-600">
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                    <button onClick={() => setEditingDoc(doc)} className="text-gray-400 hover:text-brand-600"><Pencil size={14} /></button>
+                    <button onClick={() => handleDeleteDoc(doc)} className="text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 card-hover">
           <h2 className="flex items-center gap-2 font-medium text-gray-900 mb-3">
             <KeyRound size={16} /> Portal / PWA Login
           </h2>
@@ -141,6 +190,14 @@ export function DriverDetailPage() {
           )}
         </div>
       </div>
+
+      {(addingDoc || editingDoc) && (
+        <DriverDocumentFormModal
+          driverId={driver.id}
+          document={editingDoc}
+          onClose={() => { setAddingDoc(false); setEditingDoc(null); refetchDriver(); }}
+        />
+      )}
     </div>
   );
 }

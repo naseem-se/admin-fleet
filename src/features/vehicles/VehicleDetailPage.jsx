@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Truck, Gauge, Droplet, Wrench, FileText, UserRound, X, QrCode, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Truck, Gauge, Droplet, Wrench, FileText, UserRound, X, QrCode, Pencil, Trash2, ExternalLink } from 'lucide-react';
 import { vehiclesApi } from './api';
 import { useUpdateVehicle } from './useVehicles';
 import { DriverSelect } from '../drivers/DriverSelect';
@@ -62,7 +62,8 @@ export function VehicleDetailPage() {
   if (isLoading) return <FullPageLoader />;
   if (!data) return null;
 
-  const { vehicle, journeys, fuel_entries, maintenance_records, documents } = data;
+  const { vehicle, journeys, fuel_entries, maintenance_records, documents, live_avg_kmpl } = data;
+  const displayAvgKmpl = vehicle.avg_kmpl_cached ?? live_avg_kmpl;
 
   return (
     <div>
@@ -90,7 +91,7 @@ export function VehicleDetailPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatCard label="Odometer" value={`${vehicle.current_odometer.toLocaleString()} km`} icon={Gauge} color="blue" />
-        <StatCard label="Avg KMPL" value={vehicle.avg_kmpl_cached ?? '-'} icon={Droplet} color="teal" />
+        <StatCard label="Avg KMPL" value={displayAvgKmpl ?? '-'} icon={Droplet} color="teal" />
         <StatCard label="Fuel Entries" value={fuel_entries.length} icon={Droplet} color="green" />
         <StatCard label="Maintenance Records" value={maintenance_records.length} icon={Wrench} color="amber" />
       </div>
@@ -145,9 +146,22 @@ export function VehicleDetailPage() {
                 <div key={doc.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
                   <div>
                     <span className="capitalize text-gray-700">{doc.document_type}</span>
-                    <p className="text-xs text-gray-500">{doc.expiry_date ?? 'No expiry set'}</p>
+                    <p className="text-xs text-gray-500">
+                      {doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString() : 'No expiry set'}
+                    </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    {doc.file_url && (
+                      <a
+                        href={doc.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-gray-400 hover:text-brand-600"
+                        title="View / Download"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
                     <button onClick={() => setEditingDoc(doc)} className="text-gray-400 hover:text-brand-600"><Pencil size={14} /></button>
                     <button onClick={() => handleDeleteDoc(doc)} className="text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
                   </div>
@@ -166,7 +180,7 @@ export function VehicleDetailPage() {
               <div className="divide-y divide-gray-100">
                 {journeys.slice(0, 5).map((j) => (
                   <div key={j.id} className="flex items-center justify-between py-2 text-sm">
-                    <span className="text-gray-600">{new Date(j.start_time).toLocaleDateString()}</span>
+                    <span className="text-gray-600">{new Date(j.start.time).toLocaleDateString()}</span>
                     <span className="text-gray-900 font-medium">{j.total_distance ?? '-'} km</span>
                   </div>
                 ))}

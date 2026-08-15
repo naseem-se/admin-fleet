@@ -17,4 +17,6 @@ export const fuelApi = {
     const res = await apiClient.post('/fuel-entries/manual', payload);
     return res.data.data;
   },
+  update: async (id, payload) => (await apiClient.put(`/fuel-entries/${id}`, payload)).data.data,
+  remove: async (id) => { await apiClient.delete(`/fuel-entries/${id}`); },
 };

@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Fuel, Download, Plus } from 'lucide-react';
+import { Fuel, Download, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useFuelEntries } from './useFuel';
 import { fuelApi } from './api';
 import { StatCard } from '../../components/StatCard';
 import { FullPageLoader, Loader } from '../../components/Loader';
 import { FuelFormModal } from './FuelFormModal'; // add this import
 import { DownloadButton } from '../../components/DownloadButton';
+import { FuelEditModal } from './FuelEditModal';
+import { useConfirm } from '../../components/ConfirmProvider';
+import toast from 'react-hot-toast';
 
 const today = new Date().toISOString().slice(0, 10);
 const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
@@ -15,12 +18,22 @@ export function FuelListPage() {
   const [to, setTo] = useState(today);
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const confirm = useConfirm();
 
   const filters = { from, to, page };
   const { data, isLoading, isFetching } = useFuelEntries(filters);
 
   const totalLitres = data?.data.reduce((sum, e) => sum + Number(e.quantity_litres), 0) ?? 0;
   const totalCost = data?.data.reduce((sum, e) => sum + Number(e.total_cost), 0) ?? 0;
+
+  async function handleDelete(entry) {
+    const ok = await confirm({ title: 'Delete fuel entry?', message: 'This entry will be permanently removed.', confirmLabel: 'Delete' });
+    if (!ok) return;
+    await fuelApi.remove(entry.id);
+    toast.success('Fuel entry deleted');
+    // trigger a refetch — simplest is invalidating via queryClient if available in this file already, or refetch() from useFuelEntries
+  }
 
 
   return (
@@ -80,6 +93,10 @@ export function FuelListPage() {
                   <span>{entry.quantity_litres} L @ {entry.rate_per_litre}</span>
                   <span className="text-right font-medium text-gray-900">{entry.total_cost}</span>
                 </div>
+                <div className="flex justify-end gap-2 mt-2">
+                  <button onClick={() => setEditingEntry(entry)} className="p-1 text-gray-400 hover:text-brand-600"><Pencil size={14} /></button>
+                  <button onClick={() => handleDelete(entry)} className="p-1 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
+                </div>
               </div>
             ))}
           </div>
@@ -96,6 +113,7 @@ export function FuelListPage() {
                     <th className="px-4 py-3">Rate</th>
                     <th className="px-4 py-3">Total Cost</th>
                     <th className="px-4 py-3">Odometer</th>
+                    <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -107,6 +125,12 @@ export function FuelListPage() {
                       <td className="px-4 py-3 text-gray-600">{entry.rate_per_litre}</td>
                       <td className="px-4 py-3 font-medium text-gray-900">{entry.total_cost}</td>
                       <td className="px-4 py-3 text-gray-600">{entry.odometer_reading}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => setEditingEntry(entry)} className="text-gray-400 hover:text-brand-600"><Pencil size={16} /></button>
+                          <button onClick={() => handleDelete(entry)} className="text-gray-400 hover:text-red-600"><Trash2 size={16} /></button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -127,6 +151,7 @@ export function FuelListPage() {
       )}
 
       {showModal && <FuelFormModal onClose={() => setShowModal(false)} />}
+      {editingEntry && <FuelEditModal entry={editingEntry} onClose={() => setEditingEntry(null)} />}
     </div>
   );
 }
