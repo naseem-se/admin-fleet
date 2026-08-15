@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { apiClient } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
+import { disconnectEcho } from '../lib/echo';
 
 const AuthContext = createContext(undefined);
 const TOKEN_KEY = 'fleet_auth_token';
@@ -24,6 +25,7 @@ export function AuthProvider({ children }) {
     const res = await apiClient.post('/auth/login', { email, password });
     localStorage.setItem(TOKEN_KEY, res.data.token);
     setUser(res.data.user);
+    return res.data.user;
   }
 
   async function logout() {
@@ -33,7 +35,13 @@ export function AuthProvider({ children }) {
       localStorage.removeItem(TOKEN_KEY);
       setUser(null);
       queryClient.clear();
+      disconnectEcho();
     }
+  }
+
+  async function refreshUser() {
+    const res = await apiClient.get('/auth/me');
+    setUser(res.data.data ?? res.data);
   }
 
   function hasRole(...roles) {
@@ -41,7 +49,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, hasRole, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

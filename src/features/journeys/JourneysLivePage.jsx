@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Route as RouteIcon, Gauge, Clock, MapPin } from 'lucide-react';
-import { useLiveJourneys } from './useJourneys';
+import { useLiveJourneys } from './useLiveJourneys';
 import { Avatar } from '../../components/Avatar';
 import { FullPageLoader } from '../../components/Loader';
 import clsx from 'clsx';
@@ -13,7 +13,7 @@ function elapsedSince(startTime) {
 }
 
 export function JourneysLivePage() {
-  const { data: journeys, isLoading } = useLiveJourneys();
+    const { data: journeys, isLoading, isRealtimeConnected } = useLiveJourneys();
   const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
@@ -30,9 +30,12 @@ export function JourneysLivePage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold text-gray-900">Live Journeys</h1>
-        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
-          {journeys?.length ?? 0} active
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${isRealtimeConnected ? 'bg-green-500 animate-pulseGlow' : 'bg-gray-300'}`} />
+          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+            {journeys?.length ?? 0} active
+          </span>
+        </div>
       </div>
 
       {!journeys || journeys.length === 0 ? (

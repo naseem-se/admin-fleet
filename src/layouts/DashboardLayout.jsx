@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Users, Route as RouteIcon, Fuel, Wrench,
-  FileText, LogOut, Menu, X, Search, Bell,
+  FileText, LogOut, Menu, X, Search, Bell, Settings
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Avatar } from '../components/Avatar';
 import clsx from 'clsx';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { NotificationDropdown } from '../components/NotificationDropdown';
+import { VerifyEmailBanner } from '../components/VerifyEmailBanner';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/fuel', label: 'Fuel', icon: Fuel },
   { to: '/maintenance', label: 'Maintenance', icon: Wrench },
   { to: '/reports', label: 'Reports', icon: FileText },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function DashboardLayout() {
@@ -121,6 +123,7 @@ export function DashboardLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
+          <VerifyEmailBanner />
           <div key={location.pathname} className="max-w-7xl mx-auto px-4 sm:px-6 py-6 animate-fadeIn">
             <ErrorBoundary key={location.pathname}>
               <Outlet />

@@ -53,11 +53,11 @@ export function DashboardPage() {
   const alerts = [
     ...(upcomingMaintenance ?? []).map((m) => ({
       id: `m-${m.id}`, icon: Wrench, color: 'text-amber-600 bg-amber-50',
-      text: `Maintenance due for ${m.vehicle?.registration_number ?? 'a vehicle'} on ${m.next_service_date ?? 'soon'}`,
+      text: `Maintenance due for ${m.vehicle?.registration_number ?? 'a vehicle'} on ${new Date(m.next_service_date)?.toLocaleDateString() ?? 'soon'}`,
     })),
     ...(expiringDocs ?? []).map((d) => ({
       id: `d-${d.id}`, icon: FileWarning, color: 'text-red-600 bg-red-50',
-      text: `${d.document_type} for ${d.vehicle?.registration_number ?? 'a vehicle'} expires ${d.expiry_date}`,
+      text: `${d.document_type} for ${d.vehicle?.registration_number ?? 'a vehicle'} expires ${new Date(d.expiry_date)?.toLocaleDateString()}`,
     })),
   ];
 

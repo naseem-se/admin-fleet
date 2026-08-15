@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { extractErrorMessage } from '../lib/apiClient';
 import { Loader } from '../components/Loader';
@@ -17,8 +18,8 @@ export function LoginPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(email, password);
-      navigate('/', { replace: true });
+      const loggedInUser = await login(email, password);
+      navigate(loggedInUser.roles?.includes('super_admin') ? '/platform' : '/', { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
@@ -56,6 +57,11 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           className="mb-6 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
         />
+        <div className="mb-6 flex justify-end">
+          <Link to="/forgot-password" className="text-sm text-brand-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
 
         <button
           type="submit"

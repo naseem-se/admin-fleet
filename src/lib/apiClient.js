@@ -26,7 +26,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-export function extractValidationErrors(error) {
+export const extractValidationErrors = (error) => {
   if (axios.isAxiosError(error) && error.response?.status === 422) {
     const errors = error.response.data?.errors ?? {};
     return Object.fromEntries(
@@ -36,7 +36,7 @@ export function extractValidationErrors(error) {
   return {};
 }
 
-export function extractErrorMessage(error) {
+export const extractErrorMessage = (error) => {
   if (axios.isAxiosError(error)) {
     return error.response?.data?.message ?? 'Something went wrong. Please try again.';
   }
