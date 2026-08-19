@@ -13,6 +13,7 @@ import { StatCard } from '../../components/StatCard';
 import { FullPageLoader } from '../../components/Loader';
 import { useConfirm } from '../../components/ConfirmProvider';
 import { apiClient, extractErrorMessage } from '../../lib/apiClient';
+import { PhotoLightbox } from '../../components/PhotoLightbox';
 
 export function VehicleDetailPage() {
   const { id } = useParams();
@@ -22,6 +23,7 @@ export function VehicleDetailPage() {
   const [showQr, setShowQr] = useState(false);
   const [addingDoc, setAddingDoc] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['vehicles', id, 'history'],
@@ -180,8 +182,20 @@ export function VehicleDetailPage() {
               <div className="divide-y divide-gray-100">
                 {journeys.slice(0, 5).map((j) => (
                   <div key={j.id} className="flex items-center justify-between py-2 text-sm">
-                    <span className="text-gray-600">{new Date(j.start.time).toLocaleDateString()}</span>
-                    <span className="text-gray-900 font-medium">{j.total_distance ?? '-'} km</span>
+                    <span className="text-gray-600">{new Date(j.start.time).toLocaleDateString()} - {new Date(j.end.time).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-3">
+                      {j.start?.photo_url && (
+                        <button onClick={() => setLightboxPhoto({ src: j.start.photo_url, label: 'Start Odometer' })} className="text-xs text-brand-600 hover:underline">
+                          Start Photo
+                        </button>
+                      )}
+                      {j.end?.photo_url && (
+                        <button onClick={() => setLightboxPhoto({ src: j.end.photo_url, label: 'End Odometer' })} className="text-xs text-brand-600 hover:underline">
+                          End Photo
+                        </button>
+                      )}
+                      <span className="text-gray-900 font-medium">{j.total_distance ?? '-'} km</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -213,6 +227,9 @@ export function VehicleDetailPage() {
           document={editingDoc}
           onClose={() => { setAddingDoc(false); setEditingDoc(null); refetch(); }}
         />
+      )}
+      {lightboxPhoto && (
+        <PhotoLightbox src={lightboxPhoto.src} label={lightboxPhoto.label} onClose={() => setLightboxPhoto(null)} />
       )}
     </div>
   );

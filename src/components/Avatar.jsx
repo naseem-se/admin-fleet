@@ -7,22 +7,23 @@ function colorFor(name) {
   return palette[index % palette.length];
 }
 
-export function Avatar({ name, size = 'md' }) {
-  const initials = (name ?? '?')
-    .split(' ')
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+export function Avatar({ name, photoUrl, size = 'md' }) {
+  const sizeClass = { sm: 'h-8 w-8 text-xs', md: 'h-10 w-10 text-sm', lg: 'h-16 w-16 text-lg' }[size];
+
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className={clsx('shrink-0 rounded-full object-cover', sizeClass)}
+      />
+    );
+  }
+
+  const initials = (name ?? '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <div
-      className={clsx(
-        'flex shrink-0 items-center justify-center rounded-full font-medium',
-        size === 'sm' ? 'h-7 w-7 text-xs' : 'h-9 w-9 text-sm',
-        colorFor(name)
-      )}
-    >
+    <div className={clsx('flex shrink-0 items-center justify-center rounded-full font-medium', sizeClass, colorFor(name))}>
       {initials}
     </div>
   );

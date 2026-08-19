@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { setSubscriptionIssue, clearSubscriptionIssue } from './subscriptionStatus';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -22,6 +23,28 @@ apiClient.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+    return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.response.use(
+  (response) => {
+    clearSubscriptionIssue();
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('fleet_auth_token'); // 'driver_auth_token' in the driver-pwa version
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+
+    const code = error.response?.data?.code;
+    if (error.response?.status === 402 || code === 'account_suspended') {
+      setSubscriptionIssue(error.response.data);
+    }
+
     return Promise.reject(error);
   }
 );

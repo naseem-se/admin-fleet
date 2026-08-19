@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { apiClient } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
 import { disconnectEcho } from '../lib/echo';
+import { clearSubscriptionIssue } from '../lib/subscriptionStatus';
 
 const AuthContext = createContext(undefined);
 const TOKEN_KEY = 'fleet_auth_token';
@@ -36,6 +37,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       queryClient.clear();
       disconnectEcho();
+      clearSubscriptionIssue();
     }
   }
 

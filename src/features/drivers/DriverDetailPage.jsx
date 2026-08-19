@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { useConfirm } from '../../components/ConfirmProvider';
 import { DriverDocumentFormModal } from './DriverDocumentFormModal';
 import { apiClient } from '../../lib/apiClient';
+import { DriverPhotoUpload } from './DriverPhotoUpload';
 
 export function DriverDetailPage() {
   const { id } = useParams();
@@ -82,13 +83,18 @@ export function DriverDetailPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Avatar name={driver.name} />
+          <Avatar name={driver.name} photoUrl={driver.profile_photo_url} size="sm" />
           <div>
             <h1 className="text-xl font-semibold text-gray-900">{driver.name}</h1>
             <p className="text-sm text-gray-500">{driver.phone}</p>
           </div>
         </div>
         <StatusBadge status={driver.status} />
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 mb-6 card-hover">
+        <h2 className="font-medium text-gray-900 mb-3">Profile Photo</h2>
+        <DriverPhotoUpload driver={driver} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

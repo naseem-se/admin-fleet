@@ -34,7 +34,7 @@ export function useLiveJourneys() {
           if (!old) return old;
           return old.map((j) =>
             j.id === event.journey_id
-              ? { ...j, last_location: { lat: event.lat, lng: event.lng, recorded_at: event.recorded_at } }
+              ? { ...j, last_location: { lat: event.lat, lng: event.lng, recorded_at: event.recorded_at, accuracy_meters: event.accuracy_meters } }
               : j
           );
         });

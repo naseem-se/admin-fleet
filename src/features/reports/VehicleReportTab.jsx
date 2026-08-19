@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { FullPageLoader } from '../../components/Loader';
 import { Gauge, Fuel, Wrench } from 'lucide-react';
 import { DownloadButton } from '../../components/DownloadButton';
+import { PhotoLightbox } from '../../components/PhotoLightbox';
 
 const today = new Date().toISOString().slice(0, 10);
 const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
@@ -17,6 +18,7 @@ export function VehicleReportTab() {
   const [vehicle, setVehicle] = useState(null);
   const [from, setFrom] = useState(thirtyDaysAgo);
   const [to, setTo] = useState(today);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['reports', 'vehicle', vehicle?.id, from, to],
@@ -89,6 +91,7 @@ export function VehicleReportTab() {
                       <th className="px-4 py-3">Start KM</th>
                       <th className="px-4 py-3">End KM</th>
                       <th className="px-4 py-3">Distance</th>
+                      <th className="px-4 py-3">Photos</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -99,6 +102,16 @@ export function VehicleReportTab() {
                         <td className="px-4 py-3 text-gray-600">{j.start_km}</td>
                         <td className="px-4 py-3 text-gray-600">{j.end_km ?? '-'}</td>
                         <td className="px-4 py-3 font-medium text-gray-900">{j.total_distance ?? '-'} km</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            {j.start?.photo_url && (
+                              <button onClick={() => setLightboxPhoto({ src: j.start.photo_url, label: 'Start Odometer' })} className="text-xs text-brand-600 hover:underline">Start</button>
+                            )}
+                            {j.end?.photo_url && (
+                              <button onClick={() => setLightboxPhoto({ src: j.end.photo_url, label: 'End Odometer' })} className="text-xs text-brand-600 hover:underline">End</button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -107,6 +120,9 @@ export function VehicleReportTab() {
             )}
           </div>
         </>
+      )}
+      {lightboxPhoto && (
+        <PhotoLightbox src={lightboxPhoto.src} label={lightboxPhoto.label} onClose={() => setLightboxPhoto(null)} />
       )}
     </div>
   );

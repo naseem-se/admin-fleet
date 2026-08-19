@@ -5,6 +5,7 @@ import { Avatar } from '../../components/Avatar';
 import { FullPageLoader } from '../../components/Loader';
 import clsx from 'clsx';
 import { GoogleMapView } from '../../components/GoogleMapView';
+import { PhotoLightbox } from '../../components/PhotoLightbox';
 
 function elapsedSince(startTime) {
   const minutes = Math.floor((Date.now() - new Date(startTime).getTime()) / 60000);
@@ -13,8 +14,9 @@ function elapsedSince(startTime) {
 }
 
 export function JourneysLivePage() {
-    const { data: journeys, isLoading, isRealtimeConnected } = useLiveJourneys();
+  const { data: journeys, isLoading, isRealtimeConnected } = useLiveJourneys();
   const [selectedId, setSelectedId] = useState(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   useEffect(() => {
     if (journeys?.length && !selectedId) {
@@ -90,6 +92,7 @@ export function JourneysLivePage() {
               <GoogleMapView
                 lat={selected.last_location?.lat ?? selected.start.lat}
                 lng={selected.last_location?.lng ?? selected.start.lng}
+                accuracy={selected.last_location?.accuracy_meters}
                 className="w-full h-80"
               />
 
@@ -114,10 +117,27 @@ export function JourneysLivePage() {
                     </p>
                   </div>
                 )}
+                {(selected.start?.photo_url || selected.end?.photo_url) && (
+                  <div className="col-span-2 sm:col-span-3 flex gap-3 pt-2 border-t border-gray-100">
+                    {selected.start?.photo_url && (
+                      <button onClick={() => setLightboxPhoto({ src: selected.start.photo_url, label: 'Start Odometer' })} className="text-sm text-brand-600 hover:underline">
+                        View Start Photo
+                      </button>
+                    )}
+                    {selected.end?.photo_url && (
+                      <button onClick={() => setLightboxPhoto({ src: selected.end.photo_url, label: 'End Odometer' })} className="text-sm text-brand-600 hover:underline">
+                        View End Photo
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
+      )}
+      {lightboxPhoto && (
+        <PhotoLightbox src={lightboxPhoto.src} label={lightboxPhoto.label} onClose={() => setLightboxPhoto(null)} />
       )}
     </div>
   );

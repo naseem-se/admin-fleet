@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { extractErrorMessage } from '../lib/apiClient';
 import { Loader } from '../components/Loader';
+import { apiClient } from '../lib/apiClient';
+import { clearSubscriptionIssue } from '../lib/subscriptionStatus';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -19,12 +21,20 @@ export function LoginPage() {
     setIsSubmitting(true);
     try {
       const loggedInUser = await login(email, password);
+      clearSubscriptionIssue();
+      try {
+        await apiClient.get('/auth/subscription-check');
+      } catch {
+        
+      }
+
       navigate(loggedInUser.roles?.includes('super_admin') ? '/platform' : '/', { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
+
   }
 
   return (

@@ -4,19 +4,29 @@ import { Loader } from './Loader';
 
 const containerStyle = { width: '100%', height: '100%' };
 
-export function GoogleMapView({ lat, lng, className }) {
+function toFiniteNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+export function GoogleMapView({ lat, lng, accuracy, className }) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
   const mapRef = useRef(null);
   const markerRef = useRef(null);
+  const circleRef = useRef(null);
   const animationFrameRef = useRef(null);
+  
+  const safeLat = toFiniteNumber(lat);
+  const safeLng = toFiniteNumber(lng);
+  const safeAccuracy = toFiniteNumber(accuracy);
 
   useEffect(() => {
-    if (!isLoaded || !mapRef.current || !lat || !lng) return;
+    if (!isLoaded || !mapRef.current || safeLat === null || safeLng === null) return;
 
-    const targetPos = new google.maps.LatLng(lat, lng);
+    const targetPos = new google.maps.LatLng(safeLat, safeLng);
 
     if (!markerRef.current) {
       markerRef.current = new google.maps.Marker({
@@ -32,47 +42,59 @@ export function GoogleMapView({ lat, lng, className }) {
         },
       });
       mapRef.current.panTo(targetPos);
-      return;
-    }
+    } else {
+      const startPos = markerRef.current.getPosition();
+      const startLat = startPos.lat();
+      const startLng = startPos.lng();
+      const duration = 1000;
+      const startTime = performance.now();
 
-    // Animate from the marker's current position to the new one over
-    // ~1 second — this is the difference between a jumpy dot and the
-    // smooth gliding motion inDrive/Yango/foodpanda riders expect.
-    const startPos = markerRef.current.getPosition();
-    const startLat = startPos.lat();
-    const startLng = startPos.lng();
-    const duration = 1000;
-    const startTime = performance.now();
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      function step(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const easedT = t * (2 - t);
 
-    function step(now) {
-      const elapsed = now - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const easedT = t * (2 - t); // ease-out — decelerates into the new point, feels less mechanical
+        const currentLat = startLat + (safeLat - startLat) * easedT;
+        const currentLng = startLng + (safeLng - startLng) * easedT;
 
-      const currentLat = startLat + (lat - startLat) * easedT;
-      const currentLng = startLng + (lng - startLng) * easedT;
+        markerRef.current.setPosition(new google.maps.LatLng(currentLat, currentLng));
 
-      markerRef.current.setPosition(new google.maps.LatLng(currentLat, currentLng));
-
-      if (t < 1) {
-        animationFrameRef.current = requestAnimationFrame(step);
+        if (t < 1) {
+          animationFrameRef.current = requestAnimationFrame(step);
+        }
       }
+
+      animationFrameRef.current = requestAnimationFrame(step);
+      mapRef.current.panTo(targetPos);
     }
 
-    animationFrameRef.current = requestAnimationFrame(step);
-    mapRef.current.panTo(targetPos);
-  }, [isLoaded, lat, lng]);
+    if (safeAccuracy !== null) {
+      if (!circleRef.current) {
+        circleRef.current = new google.maps.Circle({
+          map: mapRef.current,
+          fillColor: '#4f46e5',
+          fillOpacity: 0.12,
+          strokeColor: '#4f46e5',
+          strokeOpacity: 0.4,
+          strokeWeight: 1,
+        });
+      }
+      circleRef.current.setCenter(new google.maps.LatLng(safeLat, safeLng));
+      circleRef.current.setRadius(safeAccuracy);
+    }
+  }, [isLoaded, safeLat, safeLng, safeAccuracy]);
 
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       markerRef.current?.setMap(null);
+      circleRef.current?.setMap(null);
     };
   }, []);
 
-  if (!lat || !lng) {
+  if (safeLat === null || safeLng === null) {
     return (
       <div className={`flex items-center justify-center bg-gray-100 text-sm text-gray-400 ${className}`}>
         No location data yet
@@ -92,7 +114,7 @@ export function GoogleMapView({ lat, lng, className }) {
     <div className={className}>
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={{ lat, lng }}
+        center={{ lat: safeLat, lng: safeLng }}
         zoom={15}
         onLoad={(map) => { mapRef.current = map; }}
         options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}

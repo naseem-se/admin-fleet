@@ -95,7 +95,7 @@ export function DriversListPage() {
               <div key={driver.id} className="rounded-2xl border border-gray-200 bg-white p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <Avatar name={driver.name} />
+                    <Avatar name={driver.name} photoUrl={driver.profile_photo_url} size="sm" />
                     <div>
                       <Link to={`/drivers/${driver.id}`} className="font-medium text-brand-700">
                         {driver.name}
@@ -147,7 +147,7 @@ export function DriversListPage() {
                     <tr key={driver.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <Avatar name={driver.name} size="sm" />
+                          <Avatar name={driver.name} photoUrl={driver.profile_photo_url} size="sm" />
                           <Link to={`/drivers/${driver.id}`} className="font-medium text-brand-700 hover:underline">
                             {driver.name}
                           </Link>

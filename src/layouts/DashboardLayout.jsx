@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Truck, Users, Route as RouteIcon, Fuel, Wrench,
@@ -10,6 +9,9 @@ import clsx from 'clsx';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { NotificationDropdown } from '../components/NotificationDropdown';
 import { VerifyEmailBanner } from '../components/VerifyEmailBanner';
+import { useState, useEffect } from 'react';
+import { onSubscriptionIssue } from '../lib/subscriptionStatus';
+import { SubscriptionIssueScreen } from '../components/SubscriptionIssueScreen';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -25,7 +27,16 @@ const navItems = [
 export function DashboardLayout() {
   const { user, logout } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [subscriptionIssue, setSubscriptionIssue] = useState(null);
   const location = useLocation();
+
+  useEffect(() => {
+    return onSubscriptionIssue(setSubscriptionIssue);
+  }, []);
+
+  if (subscriptionIssue) {
+    return <SubscriptionIssueScreen issue={subscriptionIssue} />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
