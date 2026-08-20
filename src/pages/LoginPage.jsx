@@ -32,7 +32,7 @@ export function LoginPage() {
     } catch (err) {
       setError(extractErrorMessage(err));
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
 
   }
