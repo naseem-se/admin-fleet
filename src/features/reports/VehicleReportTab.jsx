@@ -104,11 +104,11 @@ export function VehicleReportTab() {
                         <td className="px-4 py-3 font-medium text-gray-900">{j.total_distance ?? '-'} km</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
-                            {j.start?.photo_url && (
-                              <button onClick={() => setLightboxPhoto({ src: j.start.photo_url, label: 'Start Odometer' })} className="text-xs text-brand-600 hover:underline">Start</button>
+                            {j.start_photo_url && (
+                              <button onClick={() => setLightboxPhoto({ src: j.start_photo_url, label: 'Start Odometer' })} className="text-xs text-brand-600 hover:underline">Start</button>
                             )}
-                            {j.end?.photo_url && (
-                              <button onClick={() => setLightboxPhoto({ src: j.end.photo_url, label: 'End Odometer' })} className="text-xs text-brand-600 hover:underline">End</button>
+                            {j.end_photo_url && (
+                              <button onClick={() => setLightboxPhoto({ src: j.end_photo_url, label: 'End Odometer' })} className="text-xs text-brand-600 hover:underline">End</button>
                             )}
                           </div>
                         </td>
