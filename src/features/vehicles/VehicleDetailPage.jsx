@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Truck, Gauge, Droplet, Wrench, FileText, UserRound, X, QrCode, Pencil, Trash2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Truck, Gauge, Droplet, Wrench, FileText, UserRound, X, QrCode, Pencil, Trash2, ExternalLink, RouteIcon } from 'lucide-react';
 import { vehiclesApi } from './api';
 import { useUpdateVehicle } from './useVehicles';
-import { DriverSelect } from '../drivers/DriverSelect';
 import { DocumentFormModal } from './DocumentFormModal';
 import { VehicleQrModal } from '../../components/VehicleQrModal';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -18,8 +17,6 @@ import { PhotoLightbox } from '../../components/PhotoLightbox';
 export function VehicleDetailPage() {
   const { id } = useParams();
   const confirm = useConfirm();
-  const [assigning, setAssigning] = useState(false);
-  const [pendingDriver, setPendingDriver] = useState(null);
   const [showQr, setShowQr] = useState(false);
   const [addingDoc, setAddingDoc] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
@@ -30,24 +27,6 @@ export function VehicleDetailPage() {
     queryFn: () => vehiclesApi.history(id),
   });
 
-  const updateMutation = useUpdateVehicle();
-
-  async function confirmAssign() {
-    if (!pendingDriver) return;
-    await updateMutation.mutateAsync({ id, payload: { assigned_driver_id: pendingDriver.id } });
-    toast.success('Driver assigned');
-    setAssigning(false);
-    setPendingDriver(null);
-    refetch();
-  }
-
-  async function unassign() {
-    const ok = await confirm({ title: 'Unassign driver?', message: 'This vehicle will have no assigned driver.', confirmLabel: 'Unassign', danger: false });
-    if (!ok) return;
-    await updateMutation.mutateAsync({ id, payload: { assigned_driver_id: null } });
-    toast.success('Driver unassigned');
-    refetch();
-  }
 
   async function handleDeleteDoc(doc) {
     const ok = await confirm({ title: 'Delete document?', message: 'This document will be permanently removed.', confirmLabel: 'Delete' });
@@ -64,8 +43,8 @@ export function VehicleDetailPage() {
   if (isLoading) return <FullPageLoader />;
   if (!data) return null;
 
-  const { vehicle, journeys, fuel_entries, maintenance_records, documents, live_avg_kmpl } = data;
-  const displayAvgKmpl = vehicle.avg_kmpl_cached ?? live_avg_kmpl;
+  const { vehicle, journeys, fuel_entries, maintenance_records, documents, total_distance, total_fuel_litres, total_fuel_cost, avg_kmpl } = data;
+  // const displayAvgKmpl = vehicle.avg_kmpl_cached ?? live_avg_kmpl;
 
   return (
     <div>
@@ -93,45 +72,15 @@ export function VehicleDetailPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatCard label="Odometer" value={`${vehicle.current_odometer.toLocaleString()} km`} icon={Gauge} color="blue" />
-        <StatCard label="Avg KMPL" value={displayAvgKmpl ?? '-'} icon={Droplet} color="teal" />
-        <StatCard label="Fuel Entries" value={fuel_entries.length} icon={Droplet} color="green" />
-        <StatCard label="Maintenance Records" value={maintenance_records.length} icon={Wrench} color="amber" />
+        <StatCard label="Total Distance Covered" value={`${total_distance} km`} icon={RouteIcon} color="blue" />
+        <StatCard label="Avg KMPL" value={avg_kmpl ?? '-'} icon={Droplet} color="teal" />
+        <StatCard label="Total Fuel Cost" value={total_fuel_cost.toLocaleString()} icon={Droplet} color="green" />
+        <StatCard label="Total Litres" value={total_fuel_litres.toLocaleString()} icon={Droplet} color="amber" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1 rounded-2xl border border-gray-200 bg-white p-5 card-hover">
-          <h2 className="flex items-center gap-2 font-medium text-gray-900 mb-3">
-            <UserRound size={16} /> Assigned Driver
-          </h2>
-
-          {vehicle.assigned_driver && !assigning ? (
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{vehicle.assigned_driver.name}</p>
-                <p className="text-xs text-gray-500">{vehicle.assigned_driver.phone}</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setAssigning(true)} className="text-xs text-brand-600 hover:underline">Change</button>
-                <button onClick={unassign} className="text-gray-400 hover:text-red-600"><X size={14} /></button>
-              </div>
-            </div>
-          ) : assigning ? (
-            <div className="space-y-2">
-              <DriverSelect value={pendingDriver} onChange={setPendingDriver} />
-              <div className="flex gap-2">
-                <button onClick={confirmAssign} disabled={!pendingDriver} className="btn-press flex-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
-                  Assign
-                </button>
-                <button onClick={() => { setAssigning(false); setPendingDriver(null); }} className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setAssigning(true)} className="btn-press w-full rounded-lg border border-dashed border-gray-300 py-2 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600">
-              + Assign a driver
-            </button>
-          )}
+          
 
           <div className="flex items-center justify-between mt-6 mb-3">
             <h2 className="flex items-center gap-2 font-medium text-gray-900">
@@ -211,7 +160,14 @@ export function VehicleDetailPage() {
                 {fuel_entries.slice(0, 5).map((f) => (
                   <div key={f.id} className="flex items-center justify-between py-2 text-sm">
                     <span className="text-gray-600">{new Date(f.entry_time).toLocaleDateString()}</span>
-                    <span className="text-gray-900 font-medium">{f.quantity_litres} L · {f.total_cost}</span>
+                    <div className="flex items-center gap-3">
+                      {f.receipt_photo_url && (
+                        <button onClick={() => setLightboxPhoto({ src: f.receipt_photo_url, label: 'Fuel Receipt' })} className="text-xs text-brand-600 hover:underline">
+                          Receipt
+                        </button>
+                      )}
+                      <span className="text-gray-900 font-medium">{f.quantity_litres} L · {f.total_cost}</span>
+                    </div>
                   </div>
                 ))}
               </div>

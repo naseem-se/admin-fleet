@@ -105,7 +105,7 @@ export function VehiclesListPage() {
                   <StatusBadge status={vehicle.status} />
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                  <span>{vehicle.assigned_driver?.name ?? 'Unassigned'}</span>
+                  {/* <span>{vehicle.assigned_driver?.name ?? 'Unassigned'}</span> */}
                   <span>{vehicle.current_odometer.toLocaleString()} km</span>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -134,7 +134,7 @@ export function VehiclesListPage() {
                   <tr>
                     <th className="px-4 py-3">Registration</th>
                     <th className="px-4 py-3">Make / Model</th>
-                    <th className="px-4 py-3">Driver</th>
+                    {/* <th className="px-4 py-3">Driver</th> */}
                     <th className="px-4 py-3">Odometer</th>
                     <th className="px-4 py-3">Avg KMPL</th>
                     <th className="px-4 py-3">Status</th>
@@ -150,7 +150,7 @@ export function VehiclesListPage() {
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{[vehicle.make, vehicle.model].filter(Boolean).join(' ') || '-'}</td>
-                      <td className="px-4 py-3 text-gray-600">{vehicle.assigned_driver?.name ?? '-'}</td>
+                      {/* <td className="px-4 py-3 text-gray-600">{vehicle.assigned_driver?.name ?? '-'}</td> */}
                       <td className="px-4 py-3 text-gray-600">{vehicle.current_odometer.toLocaleString()} km</td>
                       <td className="px-4 py-3 text-gray-600">{vehicle.avg_kmpl_cached ?? '-'}</td>
                       <td className="px-4 py-3"><StatusBadge status={vehicle.status} /></td>

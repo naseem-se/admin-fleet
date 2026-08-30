@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, FileText, Truck } from 'lucide-react';
+import { Download, Droplet, FileText, Truck } from 'lucide-react';
 import { reportsApi } from './api';
 import { VehicleSelect } from '../vehicles/VehicleSelect';
 import { DateRangePicker } from '../../components/DateRangePicker';
@@ -71,7 +71,8 @@ export function VehicleReportTab() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <StatCard label="Total Distance" value={`${data.total_distance.toLocaleString()} km`} icon={Gauge} color="blue" />
             <StatCard label="KMPL" value={data.kmpl ?? '-'} icon={Fuel} color="teal" />
-            <StatCard label="Fuel Cost" value={data.total_fuel_cost.toLocaleString()} icon={Fuel} color="green" />
+            <StatCard label="Total Fuel Cost" value={data.total_fuel_cost.toLocaleString()} icon={Fuel} color="green" />
+            <StatCard label="Total Litres" value={data.total_fuel_litres} icon={Droplet} color="amber" />
             <StatCard label="Maintenance Cost" value={data.total_maintenance_cost.toLocaleString()} icon={Wrench} color="amber" />
           </div>
 

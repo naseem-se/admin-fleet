@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 export function DriverFormModal({ driver, onClose }) {
   const isEdit = !!driver;
-  const [wantsLogin, setWantsLogin] = useState(false);
+  const [wantsLogin, setWantsLogin] = useState(true);
 
   const { register, handleSubmit, setError, formState: { errors } } = useForm({
     defaultValues: {
