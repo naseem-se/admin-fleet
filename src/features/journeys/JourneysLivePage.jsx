@@ -65,7 +65,7 @@ export function JourneysLivePage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                  <Avatar name={journey.driver?.name} size="sm" />
+                  <Avatar name={journey.driver?.name} photoUrl={journey.driver?.profile_photo_url} size="sm" />
                   {journey.driver?.name}
                 </div>
                 <div className="flex items-center gap-4 text-xs text-gray-400 mt-2">
@@ -83,6 +83,7 @@ export function JourneysLivePage() {
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">{selected.vehicle?.registration_number}</h2>
                   <p className="text-sm text-gray-500">Driver: {selected.driver?.name}</p>
+                  {selected.purpose && <p className="text-xs text-gray-400 mt-0.5">Purpose: {selected.purpose}</p>}
                 </div>
                 <span className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-700">
                   <span className="h-2 w-2 rounded-full bg-green-500" /> On Route

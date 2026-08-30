@@ -131,17 +131,18 @@ export function VehicleDetailPage() {
               <div className="divide-y divide-gray-100">
                 {journeys.slice(0, 5).map((j) => (
                   <div key={j.id} className="flex items-center justify-between py-2 text-sm">
-                    <span className="text-gray-600">{new Date(j.start.time).toLocaleDateString()} - {new Date(j.end.time).toLocaleDateString()}</span>
+                    <div>
+                      <span className="text-gray-600">{new Date(j.start_time).toLocaleDateString()}</span>
+                      <p className="text-xs text-gray-400">
+                        {j.driver?.name ?? 'Unknown driver'}{j.purpose ? ` · ${j.purpose}` : ''}
+                      </p>
+                    </div>
                     <div className="flex items-center gap-3">
                       {j.start?.photo_url && (
-                        <button onClick={() => setLightboxPhoto({ src: j.start.photo_url, label: 'Start Odometer' })} className="text-xs text-brand-600 hover:underline">
-                          Start Photo
-                        </button>
+                        <button onClick={() => setLightboxPhoto({ src: j.start.photo_url, label: 'Start Odometer' })} className="text-xs text-brand-600 hover:underline">Start</button>
                       )}
                       {j.end?.photo_url && (
-                        <button onClick={() => setLightboxPhoto({ src: j.end.photo_url, label: 'End Odometer' })} className="text-xs text-brand-600 hover:underline">
-                          End Photo
-                        </button>
+                        <button onClick={() => setLightboxPhoto({ src: j.end.photo_url, label: 'End Odometer' })} className="text-xs text-brand-600 hover:underline">End</button>
                       )}
                       <span className="text-gray-900 font-medium">{j.total_distance ?? '-'} km</span>
                     </div>
