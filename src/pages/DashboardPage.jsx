@@ -11,6 +11,9 @@ export function DashboardPage() {
     queryFn: async () => (await apiClient.get('/reports/overview')).data,
   });
 
+  console.log(overview);
+  
+
   const { data: monthSummary } = useQuery({
     queryKey: ['reports', 'fleet-summary'],
     queryFn: async () => (await apiClient.get('/reports/fleet-summary')).data,
@@ -45,7 +48,7 @@ export function DashboardPage() {
     { label: 'Total Journeys', value: overview.total_journeys, icon: RouteIcon, color: 'purple' },
     { label: 'Total Distance (km)', value: overview.total_distance.toLocaleString(), icon: Gauge, color: 'teal' },
     { label: 'Total Fuel Cost', value: overview.total_fuel_cost.toLocaleString(), icon: Fuel, color: 'red' },
-    { label: 'Fleet Avg KMPL', value: overview.fleet_avg_kmpl ?? '-', icon: Fuel, color: 'green' },
+    { label: 'Total Fuel Liters', value: overview.total_fuel_litres ?? '-', icon: Fuel, color: 'green' },
   ];
 
   const chartData = (monthSummary?.per_vehicle ?? []).slice(0, 8).map((v) => ({ name: v.vehicle, distance: Number(v.distance) }));
