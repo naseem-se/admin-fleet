@@ -132,7 +132,7 @@ export function VehicleDetailPage() {
                 {journeys.slice(0, 5).map((j) => (
                   <div key={j.id} className="flex items-center justify-between py-2 text-sm">
                     <div>
-                      <span className="text-gray-600">{new Date(j.start_time).toLocaleDateString()}</span>
+                      <span className="text-gray-600">{new Date(j.start.time).toLocaleDateString()}</span>
                       <p className="text-xs text-gray-400">
                         {j.driver?.name ?? 'Unknown driver'}{j.purpose ? ` · ${j.purpose}` : ''}
                       </p>
