@@ -75,7 +75,12 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-5 card-hover">
           <h2 className="font-medium text-gray-900 mb-1">Distance by Vehicle</h2>
-          <p className="text-xs text-gray-400 mb-4">This calendar month</p>
+          <p className="text-xs text-gray-400 mb-4">
+            {new Date().toLocaleDateString('en-US', {
+              month: 'short',
+              year: 'numeric',
+            })}
+          </p>
           {chartData.length === 0 ? (
             <p className="text-sm text-gray-400 py-12 text-center">No journey data yet this month.</p>
           ) : (
