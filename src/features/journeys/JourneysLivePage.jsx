@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Route as RouteIcon, Gauge, Clock, MapPin } from "lucide-react";
+import { Route as RouteIcon, Gauge, Clock, MapPin, AlertTriangle } from "lucide-react";
 import { useLiveJourneys } from "./useLiveJourneys";
 import { Avatar } from "../../components/Avatar";
 import { GoogleMapView } from "../../components/GoogleMapView";
 import { FullPageLoader } from "../../components/Loader";
 import { formatDateTime, formatTime } from "../../lib/formatDateTime";
 import clsx from "clsx";
+
+function minutesSince(isoString) {
+  if (!isoString) return null;
+  return Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
+}
 
 export function JourneysLivePage() {
   const { data: journeys, isLoading, isRealtimeConnected } = useLiveJourneys();
@@ -14,6 +19,14 @@ export function JourneysLivePage() {
   const selected = journeys?.find((j) => j.id === selectedId) ?? journeys?.[0];
 
   if (isLoading) return <FullPageLoader />;
+
+  const lastPingMinutes = selected ? minutesSince(selected.last_location?.recorded_at) : null;
+  // No ping since this journey started means the vehicle's "last known
+  // location" predates the trip's own start time — worth flagging clearly
+  // rather than silently showing a stale point as if it were current.
+  const isStaleLocation =
+    selected?.last_location?.recorded_at &&
+    new Date(selected.last_location.recorded_at) < new Date(selected.start.time);
 
   return (
     <div>
@@ -76,6 +89,18 @@ export function JourneysLivePage() {
                 </span>
               </div>
 
+              {isStaleLocation && (
+                <div className="flex items-start gap-2 bg-amber-50 px-5 py-3 text-sm text-amber-700">
+                  <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium">No live position received yet for this trip</p>
+                    <p className="text-xs opacity-90 mt-0.5">
+                      The map below is showing this vehicle's starting point, or its last known location from before this journey began. This usually means the driver's phone hasn't gotten a clear GPS signal yet, or is currently offline — it will update automatically once a location comes through.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <GoogleMapView
                 lat={selected.last_location?.lat ?? selected.start.lat}
                 lng={selected.last_location?.lng ?? selected.start.lng}
@@ -92,12 +117,21 @@ export function JourneysLivePage() {
                   <p className="text-xs text-gray-400 mb-1">Started At</p>
                   <p className="text-sm font-medium text-gray-900">{formatDateTime(selected.start.time)}</p>
                 </div>
-                {selected.last_location && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1 flex items-center gap-1"><MapPin size={12} /> Last Updated</p>
-                    <p className="text-sm font-medium text-gray-900">{formatDateTime(selected.last_location.recorded_at)}</p>
-                  </div>
-                )}
+                <div>
+                  <p className="text-xs text-gray-400 mb-1 flex items-center gap-1"><MapPin size={12} /> Last GPS Update</p>
+                  {selected.last_location ? (
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatDateTime(selected.last_location.recorded_at)}
+                      {lastPingMinutes !== null && (
+                        <span className="block text-xs font-normal text-gray-400">
+                          {lastPingMinutes < 1 ? "just now" : `${lastPingMinutes} min ago`}
+                        </span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-sm font-medium text-gray-400">No GPS data yet</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
