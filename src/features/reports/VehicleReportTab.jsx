@@ -16,8 +16,9 @@ export function VehicleReportTab() {
   const [vehicle, setVehicle] = useState(null);
   const [from, setFrom] = useState(thirtyDaysAgo);
   const [to, setTo] = useState(today);
-  const [highlightedJourneyId, setHighlightedJourneyId] = useState(null);
-  const journeyRowRefs = useRef({});
+  const [highlighted, setHighlighted] = useState(null);
+  const journeyRefs = useRef({});
+  const fuelRefs = useRef({});
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["reports", "vehicle", vehicle?.id, from, to],
@@ -25,13 +26,12 @@ export function VehicleReportTab() {
     enabled: !!vehicle,
   });
 
-  function jumpToJourney(journeyId) {
-    const el = journeyRowRefs.current[journeyId];
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      setHighlightedJourneyId(journeyId);
-      setTimeout(() => setHighlightedJourneyId(null), 2000);
-    }
+  function jumpTo(refs, id) {
+    const el = refs.current[id];
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlighted(`${refs === journeyRefs ? "journey" : "fuel"}-${id}`);
+    setTimeout(() => setHighlighted(null), 2000);
   }
 
   return (
@@ -47,20 +47,8 @@ export function VehicleReportTab() {
 
         {vehicle && (
           <div className="flex gap-2">
-            <DownloadButton
-              icon={FileText}
-              label="PDF"
-              path={`/reports/vehicle/${vehicle.id}`}
-              params={{ from, to, format: "pdf" }}
-              filename={`vehicle-${vehicle.registration_number}-report.pdf`}
-            />
-            <DownloadButton
-              icon={Download}
-              label="Excel"
-              path={`/reports/vehicle/${vehicle.id}`}
-              params={{ from, to, format: "xlsx" }}
-              filename={`vehicle-${vehicle.registration_number}-report.xlsx`}
-            />
+            <DownloadButton icon={FileText} label="PDF" path={`/reports/vehicle/${vehicle.id}`} params={{ from, to, format: "pdf" }} filename={`vehicle-${vehicle.registration_number}-report.pdf`} />
+            <DownloadButton icon={Download} label="Excel" path={`/reports/vehicle/${vehicle.id}`} params={{ from, to, format: "xlsx" }} filename={`vehicle-${vehicle.registration_number}-report.xlsx`} />
           </div>
         )}
       </div>
@@ -110,14 +98,15 @@ export function VehicleReportTab() {
                       <th className="px-4 py-3">Start / End KM</th>
                       <th className="px-4 py-3">Distance</th>
                       <th className="px-4 py-3">Photos</th>
+                      <th className="px-4 py-3">Fuel Logged</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {data.journeys.map((j) => (
                       <tr
                         key={j.id}
-                        ref={(el) => (journeyRowRefs.current[j.id] = el)}
-                        className={`transition-colors duration-500 ${highlightedJourneyId === j.id ? "ring-2 ring-inset ring-brand-500" : ""}`}
+                        ref={(el) => (journeyRefs.current[j.id] = el)}
+                        className={`transition-colors duration-500 ${highlighted === `journey-${j.id}` ? "bg-brand-50" : ""}`}
                       >
                         <td className="px-4 py-3 text-gray-600">{j.start_time ? new Date(j.start_time).toLocaleString() : "-"}</td>
                         <td className="px-4 py-3 text-gray-600">{j.driver_name}</td>
@@ -126,13 +115,22 @@ export function VehicleReportTab() {
                         <td className="px-4 py-3 font-medium text-gray-900">{j.distance_display} km</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
-                            {j.start_photo_url && (
-                              <a href={j.start_photo_url} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">Start</a>
-                            )}
-                            {j.end_photo_url && (
-                              <a href={j.end_photo_url} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">End</a>
-                            )}
+                            {j.start_photo_url && <a href={j.start_photo_url} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">Start</a>}
+                            {j.end_photo_url && <a href={j.end_photo_url} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">End</a>}
                           </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {j.linked_fuel_ids?.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {j.linked_fuel_ids.map((fuelId) => (
+                                <button key={fuelId} onClick={() => jumpTo(fuelRefs, fuelId)} className="text-xs text-brand-600 hover:underline text-left">
+                                  View Fuel Entry
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">None</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -163,14 +161,18 @@ export function VehicleReportTab() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {data.fuel_entries.map((f) => (
-                      <tr key={f.id}>
+                      <tr
+                        key={f.id}
+                        ref={(el) => (fuelRefs.current[f.id] = el)}
+                        className={`transition-colors duration-500 ${highlighted === `fuel-${f.id}` ? "bg-brand-50" : ""}`}
+                      >
                         <td className="px-4 py-3 text-gray-600">{new Date(f.entry_time).toLocaleString()}</td>
                         <td className="px-4 py-3 text-gray-600">{f.driver?.name ?? "-"}</td>
                         <td className="px-4 py-3 text-gray-600">{f.quantity_litres} L</td>
                         <td className="px-4 py-3 font-medium text-gray-900">{f.total_cost}</td>
                         <td className="px-4 py-3">
                           {f.linked_journey_id ? (
-                            <button onClick={() => jumpToJourney(f.linked_journey_id)} className="text-xs text-brand-600 hover:underline">
+                            <button onClick={() => jumpTo(journeyRefs, f.linked_journey_id)} className="text-xs text-brand-600 hover:underline">
                               View Trip ({f.linked_journey_date})
                             </button>
                           ) : (
@@ -178,11 +180,7 @@ export function VehicleReportTab() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          {f.receipt_url ? (
-                            <a href={f.receipt_url} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">View Receipt</a>
-                          ) : (
-                            <span className="text-xs text-gray-400">No receipt</span>
-                          )}
+                          {f.receipt_url ? <a href={f.receipt_url} target="_blank" rel="noreferrer" className="text-xs text-brand-600 hover:underline">View Receipt</a> : <span className="text-xs text-gray-400">No receipt</span>}
                         </td>
                       </tr>
                     ))}

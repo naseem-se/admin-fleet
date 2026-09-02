@@ -45,12 +45,13 @@ export function VehicleFormModal({ vehicle, onClose }) {
       }
       onClose();
     } catch (err) {
+      toast.error(extractErrorMessage(err));
       const fieldErrors = extractValidationErrors(err);
       if (Object.keys(fieldErrors).length) {
         Object.entries(fieldErrors).forEach(([field, message]) => setError(field, { message }));
-      } else {
-        toast.error(extractErrorMessage(err));
-      }
+      } //else {
+      //   toast.error(extractErrorMessage(err));
+      // }
     }
   }
 

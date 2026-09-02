@@ -1,20 +1,19 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Download, FileText } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { reportsApi } from './api';
-import { StatCard } from '../../components/StatCard';
-import { FullPageLoader } from '../../components/Loader';
-import { Truck, Gauge, Fuel, Wrench} from 'lucide-react';
-import { DownloadButton } from '../../components/DownloadButton';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { FileText, Download, Truck, Gauge, Fuel, Wrench, AlertTriangle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { reportsApi } from "./api";
+import { StatCard } from "../../components/StatCard";
+import { FullPageLoader } from "../../components/Loader";
+import { DownloadButton } from "../../components/DownloadButton";
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
 export function FleetSummaryTab() {
   const [month, setMonth] = useState(currentMonth);
 
-   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['reports', 'fleet-summary', month],
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["reports", "fleet-summary", month],
     queryFn: () => reportsApi.fleetSummary(month),
   });
 
@@ -25,28 +24,11 @@ export function FleetSummaryTab() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
         <div>
           <label className="block text-xs text-gray-500 mb-1">Month</label>
-          <input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-          />
+          <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none" />
         </div>
         <div className="flex gap-2">
-          <DownloadButton
-            icon={FileText}
-            label="PDF"
-            path="/reports/fleet-summary"
-            params={{ month, format: 'pdf' }}
-            filename={`fleet-summary-${month}.pdf`}
-          />
-          <DownloadButton
-            icon={Download}
-            label="Excel"
-            path="/reports/fleet-summary"
-            params={{ month, format: 'xlsx' }}
-            filename={`fleet-summary-${month}.xlsx`}
-          />
+          <DownloadButton icon={FileText} label="PDF" path="/reports/fleet-summary" params={{ month, format: "pdf" }} filename={`fleet-summary-${month}.pdf`} />
+          <DownloadButton icon={Download} label="Excel" path="/reports/fleet-summary" params={{ month, format: "xlsx" }} filename={`fleet-summary-${month}.xlsx`} />
         </div>
       </div>
 
@@ -59,14 +41,15 @@ export function FleetSummaryTab() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
             <StatCard label="Total Vehicles" value={data.vehicles.total} icon={Truck} color="blue" />
             <StatCard label="Total Distance" value={`${data.total_distance.toLocaleString()} km`} icon={Gauge} color="teal" />
             <StatCard label="Fuel Cost" value={data.total_fuel_cost.toLocaleString()} icon={Fuel} color="green" />
             <StatCard label="Maintenance Cost" value={data.total_maintenance_cost.toLocaleString()} icon={Wrench} color="amber" />
+            <StatCard label="Overdue Maintenance" value={data.vehicles_overdue_maintenance} icon={AlertTriangle} color="red" />
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-hover">
+          <div className="rounded-2xl border border-gray-200 bg-white p-5 card-hover mb-4">
             <h2 className="font-medium text-gray-900 mb-4">Distance by Vehicle</h2>
             {chartData.length === 0 ? (
               <p className="text-sm text-gray-400 py-12 text-center">No journey data for this month.</p>
@@ -76,11 +59,45 @@ export function FleetSummaryTab() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }} />
+                  <Tooltip cursor={{ fill: "#f8fafc" }} contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }} />
                   <Bar dataKey="distance" fill="#14b8a6" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden card-hover">
+            <div className="p-5 border-b border-gray-100">
+              <h2 className="font-medium text-gray-900">Per-Vehicle Breakdown</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3">Vehicle</th>
+                    <th className="px-4 py-3">Trips</th>
+                    <th className="px-4 py-3">Distance</th>
+                    <th className="px-4 py-3">Fuel</th>
+                    <th className="px-4 py-3">Fuel Cost</th>
+                    <th className="px-4 py-3">KMPL</th>
+                    <th className="px-4 py-3">Maintenance Cost</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {data.per_vehicle.map((v, i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-3 text-gray-600">{v.vehicle}</td>
+                      <td className="px-4 py-3 text-gray-600">{v.trips}</td>
+                      <td className="px-4 py-3 text-gray-600">{v.distance} km</td>
+                      <td className="px-4 py-3 text-gray-600">{v.fuel_litres} L</td>
+                      <td className="px-4 py-3 text-gray-600">{v.fuel_cost}</td>
+                      <td className="px-4 py-3 text-gray-600">{v.kmpl ?? "-"}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{v.maintenance_cost}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}
